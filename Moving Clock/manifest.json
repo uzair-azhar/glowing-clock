@@ -1,0 +1,21 @@
+{
+  "name": "Neon Clock",
+  "short_name": "Clock",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#00ffff",
+  "description": "A glowing analog clock with ticking sound",
+  "icons": [
+    {
+      "src": "clock-icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "clock-icon-large.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
