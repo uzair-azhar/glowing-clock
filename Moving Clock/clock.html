@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#00ffff" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neon Glow Clock</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: radial-gradient(circle at center, #0f0f0f, #000);
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    :root {
+      --glow: #00fff7;
+    }
+
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+
+    .clock {
+      width: 350px;
+      height: 350px;
+      position: relative;
+      z-index: 1;
+      border-radius: 50%;
+      border: 8px solid var(--glow);
+      box-shadow: 0 0 30px var(--glow), inset 0 0 20px var(--glow);
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .center {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      background: var(--glow);
+      border-radius: 50%;
+      z-index: 10;
+      box-shadow: 0 0 10px var(--glow);
+    }
+
+    .hand {
+      position: absolute;
+      bottom: 50%;
+      left: 50%;
+      transform-origin: bottom center;
+      transform: translateX(-50%) rotate(0deg);
+      border-radius: 6px;
+    }
+
+    .hour {
+      width: 6px;
+      height: 90px;
+      background: var(--glow);
+      box-shadow: 0 0 15px var(--glow);
+      z-index: 6;
+    }
+
+    .minute {
+      width: 4px;
+      height: 120px;
+      background: lime;
+      box-shadow: 0 0 10px lime;
+      z-index: 5;
+    }
+
+    .second {
+      width: 2px;
+      height: 140px;
+      background: red;
+      box-shadow: 0 0 10px red;
+      z-index: 4;
+    }
+
+    .number {
+      position: absolute;
+      color: var(--glow);
+      font-size: 1.5em;
+      font-weight: bold;
+      transform: translate(-50%, -50%);
+      text-shadow: 0 0 8px var(--glow);
+    }
+
+    .digital-time {
+      position: absolute;
+      bottom: -50px;
+      color: var(--glow);
+      font-size: 1.5em;
+      text-shadow: 0 0 8px var(--glow);
+    }
+  </style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<div class="clock">
+  <div class="center"></div>
+  <div class="hand hour" id="hour"></div>
+  <div class="hand minute" id="minute"></div>
+  <div class="hand second" id="second"></div>
+  <div class="digital-time" id="digital"></div>
+</div>
+<audio id="tick" src="tick.mp3" preload="auto"></audio>
+
+<script>
+  if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js").then(() => {
+    console.log("Service Worker Registered");
+  });
+}
+  const clock = document.querySelector('.clock');
+  const tickSound = document.getElementById('tick');
+  const digital = document.getElementById('digital');
+
+  // Clock numbers
+  for (let i = 1; i <= 12; i++) {
+    const num = document.createElement('div');
+    num.className = 'number';
+    num.textContent = i;
+    const angle = (i - 3) * 30 * Math.PI / 180;
+    const radius = 140;
+    const x = 175 + radius * Math.cos(angle);
+    const y = 175 + radius * Math.sin(angle);
+    num.style.left = `${x}px`;
+    num.style.top = `${y}px`;
+    clock.appendChild(num);
+  }
+
+  function updateClock() {
+    const now = new Date();
+    const sec = now.getSeconds();
+    const min = now.getMinutes();
+    const hr = now.getHours();
+
+    const secDeg = sec * 6;
+    const minDeg = min * 6 + sec * 0.1;
+    const hrDeg = (hr % 12) * 30 + min * 0.5;
+
+    document.getElementById('second').style.transform = `translateX(-50%) rotate(${secDeg}deg)`;
+    document.getElementById('minute').style.transform = `translateX(-50%) rotate(${minDeg}deg)`;
+    document.getElementById('hour').style.transform = `translateX(-50%) rotate(${hrDeg}deg)`;
+
+    const ampm = hr >= 12 ? 'PM' : 'AM';
+    const h = hr % 12 || 12;
+    const m = min.toString().padStart(2, '0');
+    digital.textContent = `${h}:${m} ${ampm}`;
+
+    tickSound.currentTime = 0;
+    tickSound.play();
+  }
+
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  document.addEventListener('keydown', (e) => {
+    const root = document.documentElement;
+    switch (e.key.toLowerCase()) {
+      case 'r': root.style.setProperty('--glow', '#ff004c'); break;
+      case 'g': root.style.setProperty('--glow', '#00ff88'); break;
+      case 'b': root.style.setProperty('--glow', '#00c8ff'); break;
+      case 'y': root.style.setProperty('--glow', '#ffff00'); break;
+      case 'p': root.style.setProperty('--glow', '#e100ff'); break;
+    }
+  });
+
+  // Glowing particles
+  const canvas = document.getElementById('bg');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const particles = [];
+  for (let i = 0; i < 100; i++) {
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 2 + 1,
+      d: Math.random() * 5 + 1
+    });
+  }
+
+  function drawParticles() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'rgba(0,255,255,0.3)';
+    for (let p of particles) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+      p.y += p.d * 0.3;
+      if (p.y > canvas.height) {
+        p.y = 0;
+        p.x = Math.random() * canvas.width;
+      }
+    }
+    requestAnimationFrame(drawParticles);
+  }
+  drawParticles();
+</script>
+</body>
+</html>
